@@ -1,0 +1,170 @@
+import axios from 'axios';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+export const api = axios.create({
+  baseURL: `${API_BASE_URL}/api`,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Request interceptor to add auth token
+api.interceptors.request.use(
+  (config) => {
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor to handle auth errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+export interface User {
+  id: number;
+  email: string;
+  name: string;
+}
+
+export interface AuthResponse {
+  message: string;
+  token: string;
+  user: User;
+}
+
+export interface Category {
+  id: number;
+  name: string;
+  type: 'income' | 'expense';
+  color: string;
+  icon: string;
+  userId: number;
+  createdAt: string;
+}
+
+export interface Transaction {
+  id: number;
+  amount: number;
+  description?: string;
+  date: string;
+  type: 'income' | 'expense';
+  categoryId: number;
+  userId: number;
+  category: {
+    id: number;
+    name: string;
+    color: string;
+    icon: string;
+    type: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Auth API
+export const authApi = {
+  register: (data: { email: string; name: string; password: string }) =>
+    api.post<AuthResponse>('/auth/register', data),
+  login: (data: { email: string; password: string }) =>
+    api.post<AuthResponse>('/auth/login', data),
+  logout: () => api.post('/auth/logout'),
+};
+
+// Categories API
+export const categoriesApi = {
+  getAll: () => api.get<Category[]>('/categories'),
+  create: (data: Omit<Category, 'id' | 'userId' | 'createdAt'>) =>
+    api.post<Category>('/categories', data),
+  update: (id: number, data: Omit<Category, 'id' | 'userId' | 'createdAt'>) =>
+    api.put<Category>(`/categories/${id}`, data),
+  delete: (id: number) => api.delete(`/categories/${id}`),
+};
+
+// Transactions API
+export const transactionsApi = {
+  getAll: (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    category?: string;
+    type?: string;
+    startDate?: string;
+    endDate?: string;
+  }) => api.get<{
+    transactions: Transaction[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalItems: number;
+      itemsPerPage: number;
+      hasNextPage: boolean;
+      hasPrevPage: boolean;
+    };
+  }>('/transactions', { params }),
+  getById: (id: number) => api.get<Transaction>(`/transactions/${id}`),
+  create: (data: {
+    amount: number;
+    description?: string;
+    date: string;
+    type: 'income' | 'expense';
+    categoryId: number;
+  }) => api.post<Transaction>('/transactions', data),
+  update: (id: number, data: {
+    amount: number;
+    description?: string;
+    date: string;
+    type: 'income' | 'expense';
+    categoryId: number;
+  }) => api.put<Transaction>(`/transactions/${id}`, data),
+  delete: (id: number) => api.delete(`/transactions/${id}`),
+};
+
+// Dashboard API
+export const dashboardApi = {
+  getSummary: () => api.get<{
+    balance: number;
+    totalIncome: number;
+    totalExpenses: number;
+    monthlyIncome: number;
+    monthlyExpenses: number;
+    transactionCount: number;
+    recentTransactions: Transaction[];
+  }>('/dashboard/summary'),
+  getMonthlyStats: (months?: number) => api.get<Array<{
+    month: string;
+    income: number;
+    expenses: number;
+  }>>('/dashboard/monthly-stats', { params: { months } }),
+  getCategoryBreakdown: (period?: 'month' | 'year' | 'all') => api.get<Array<{
+    category: Category;
+    type: string;
+    amount: number;
+    percentage: number;
+  }>>('/dashboard/category-breakdown', { params: { period } }),
+  getTrends: (params?: { period?: 'week' | 'month' | 'year'; type?: 'income' | 'expense' }) =>
+    api.get<Array<{
+      period: string;
+      total: number;
+      count: number;
+    }>>('/dashboard/trends', { params }),
+};
