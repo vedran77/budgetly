@@ -30,7 +30,13 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      if (typeof window !== 'undefined') {
+      // Only redirect to login if we're not already on the login/register page
+      // and if the error is not from a login/register attempt
+      const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+      const isAuthPage = currentPath === '/login' || currentPath === '/register';
+      const isAuthEndpoint = error.config?.url?.includes('/auth/login') || error.config?.url?.includes('/auth/register');
+      
+      if (!isAuthPage && !isAuthEndpoint && typeof window !== 'undefined') {
         localStorage.removeItem('authToken');
         localStorage.removeItem('user');
         window.location.href = '/login';

@@ -12,7 +12,13 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "lint": "eslint src --ext .ts",
-    "lint:fix": "eslint src --ext .ts --fix"
+    "lint:fix": "eslint src --ext .ts --fix",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "docker:restart": "docker-compose restart",
+    "setup": "npm run docker:up && timeout /t 5 && npx prisma migrate dev --name init && npx prisma generate",
+    "db:reset": "npx prisma migrate reset && npx prisma generate"
   },
   "keywords": ["finance", "budget", "dashboard", "api"],
   "author": "Vedran Vucic",

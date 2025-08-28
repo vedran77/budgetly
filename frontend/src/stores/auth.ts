@@ -93,6 +93,8 @@ export const useAuthStore = create<AuthState>()(
           // In a real app, you might want to validate the token with the server
           // For now, we'll assume it's valid if it exists
           set({ token, isAuthenticated: true });
+        } else {
+          set({ isAuthenticated: false });
         }
       },
     }),
