@@ -1,11 +1,11 @@
-import { Router } from 'express';
+import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
 import { authenticateToken, AuthenticatedRequest } from '../middleware/auth';
 
 const router = Router();
 
 // Get dashboard summary
-router.get('/summary', authenticateToken, async (req: AuthenticatedRequest, res) => {
+router.get('/summary', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user!.userId;
     const currentDate = new Date();
@@ -93,7 +93,7 @@ router.get('/summary', authenticateToken, async (req: AuthenticatedRequest, res)
 });
 
 // Get monthly statistics
-router.get('/monthly-stats', authenticateToken, async (req: AuthenticatedRequest, res) => {
+router.get('/monthly-stats', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user!.userId;
     const { months = '12' } = req.query;
@@ -138,7 +138,7 @@ router.get('/monthly-stats', authenticateToken, async (req: AuthenticatedRequest
 });
 
 // Get category breakdown
-router.get('/category-breakdown', authenticateToken, async (req: AuthenticatedRequest, res) => {
+router.get('/category-breakdown', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user!.userId;
     const { period = 'month' } = req.query;
@@ -205,7 +205,7 @@ router.get('/category-breakdown', authenticateToken, async (req: AuthenticatedRe
 });
 
 // Get spending trends
-router.get('/trends', authenticateToken, async (req: AuthenticatedRequest, res) => {
+router.get('/trends', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user!.userId;
     const { period = 'month', type = 'expense' } = req.query;

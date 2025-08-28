@@ -41,7 +41,7 @@ export default function LoginPage() {
       await login(data.email, data.password);
       toast.success('Login successful!');
       router.push('/dashboard');
-    } catch (error) {
+    } catch {
       toast.error('Login failed. Please check your credentials.');
     } finally {
       setIsLoading(false);

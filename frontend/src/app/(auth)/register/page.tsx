@@ -46,7 +46,7 @@ export default function RegisterPage() {
       await registerUser(data.email, data.name, data.password);
       toast.success('Account created successfully!');
       router.push('/dashboard');
-    } catch (error) {
+    } catch {
       toast.error('Registration failed. Please try again.');
     } finally {
       setIsLoading(false);

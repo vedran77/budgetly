@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import prisma from '../lib/prisma';
 import { generateToken } from '../lib/jwt';
@@ -7,7 +7,7 @@ import { validateRegistration, validateLogin } from '../lib/validation';
 const router = Router();
 
 // Register new user
-router.post('/register', validateRegistration, async (req, res) => {
+router.post('/register', validateRegistration, async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, name, password } = req.body;
 
@@ -17,7 +17,8 @@ router.post('/register', validateRegistration, async (req, res) => {
     });
 
     if (existingUser) {
-      return res.status(400).json({ error: 'User with this email already exists' });
+      res.status(400).json({ error: 'User with this email already exists' });
+      return;
     }
 
     // Hash password
@@ -70,7 +71,7 @@ router.post('/register', validateRegistration, async (req, res) => {
 });
 
 // Login user
-router.post('/login', validateLogin, async (req, res) => {
+router.post('/login', validateLogin, async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
 
@@ -82,14 +83,16 @@ router.post('/login', validateLogin, async (req, res) => {
     console.log(user);
 
     if (!user) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      res.status(401).json({ error: 'Invalid email or password' });
+      return;
     }
 
     // Check password
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      res.status(401).json({ error: 'Invalid email or password' });
+      return;
     }
 
     // Generate token
@@ -111,7 +114,7 @@ router.post('/login', validateLogin, async (req, res) => {
 });
 
 // Logout (client-side token removal)
-router.post('/logout', (req, res) => {
+router.post('/logout', (_req: Request, res: Response): void => {
   res.json({ message: 'Logged out successfully' });
 });
 

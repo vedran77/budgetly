@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
 import { authenticateToken, AuthenticatedRequest } from '../middleware/auth';
 import { validateCategory } from '../lib/validation';
@@ -6,7 +6,7 @@ import { validateCategory } from '../lib/validation';
 const router = Router();
 
 // Get all categories for authenticated user
-router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
+router.get('/', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const categories = await prisma.category.findMany({
       where: { userId: req.user!.userId },
@@ -24,7 +24,7 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
 });
 
 // Create new category
-router.post('/', authenticateToken, validateCategory, async (req: AuthenticatedRequest, res) => {
+router.post('/', authenticateToken, validateCategory, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { name, type, color, icon } = req.body;
 
@@ -37,7 +37,8 @@ router.post('/', authenticateToken, validateCategory, async (req: AuthenticatedR
     });
 
     if (existingCategory) {
-      return res.status(400).json({ error: 'Category with this name already exists' });
+      res.status(400).json({ error: 'Category with this name already exists' });
+      return;
     }
 
     const category = await prisma.category.create({
@@ -58,7 +59,7 @@ router.post('/', authenticateToken, validateCategory, async (req: AuthenticatedR
 });
 
 // Update category
-router.put('/:id', authenticateToken, validateCategory, async (req: AuthenticatedRequest, res) => {
+router.put('/:id', authenticateToken, validateCategory, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const { name, type, color, icon } = req.body;
@@ -72,7 +73,8 @@ router.put('/:id', authenticateToken, validateCategory, async (req: Authenticate
     });
 
     if (!existingCategory) {
-      return res.status(404).json({ error: 'Category not found' });
+      res.status(404).json({ error: 'Category not found' });
+      return;
     }
 
     // Check if another category with same name exists for user (excluding current)
@@ -85,7 +87,8 @@ router.put('/:id', authenticateToken, validateCategory, async (req: Authenticate
     });
 
     if (duplicateCategory) {
-      return res.status(400).json({ error: 'Category with this name already exists' });
+      res.status(400).json({ error: 'Category with this name already exists' });
+      return;
     }
 
     const category = await prisma.category.update({
@@ -106,7 +109,7 @@ router.put('/:id', authenticateToken, validateCategory, async (req: Authenticate
 });
 
 // Delete category
-router.delete('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => {
+router.delete('/:id', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
 
@@ -124,15 +127,17 @@ router.delete('/:id', authenticateToken, async (req: AuthenticatedRequest, res) 
     });
 
     if (!category) {
-      return res.status(404).json({ error: 'Category not found' });
+      res.status(404).json({ error: 'Category not found' });
+      return;
     }
 
     // Prevent deletion if category has transactions
     if (category._count.transactions > 0) {
-      return res.status(400).json({ 
+      res.status(400).json({ 
         error: 'Cannot delete category with existing transactions',
         transactionCount: category._count.transactions
       });
+      return;
     }
 
     await prisma.category.delete({

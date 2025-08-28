@@ -18,7 +18,7 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       user: null,
       token: null,
       isLoading: false,
@@ -39,8 +39,8 @@ export const useAuthStore = create<AuthState>()(
             isLoading: false,
             error: null,
           });
-        } catch (error: any) {
-          const errorMessage = error.response?.data?.error || 'Login failed';
+        } catch (error: unknown) {
+          const errorMessage = (error as any)?.response?.data?.error || 'Login failed';
           set({
             error: errorMessage,
             isLoading: false,
@@ -64,8 +64,8 @@ export const useAuthStore = create<AuthState>()(
             isLoading: false,
             error: null,
           });
-        } catch (error: any) {
-          const errorMessage = error.response?.data?.error || 'Registration failed';
+        } catch (error: unknown) {
+          const errorMessage = (error as any)?.response?.data?.error || 'Registration failed';
           set({
             error: errorMessage,
             isLoading: false,

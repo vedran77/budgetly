@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
 import { authenticateToken, AuthenticatedRequest } from '../middleware/auth';
 import { validateTransaction } from '../lib/validation';
@@ -6,7 +6,7 @@ import { validateTransaction } from '../lib/validation';
 const router = Router();
 
 // Get transactions with filtering and pagination
-router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
+router.get('/', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const {
       page = '1',
@@ -94,7 +94,7 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
 });
 
 // Create new transaction
-router.post('/', authenticateToken, validateTransaction, async (req: AuthenticatedRequest, res) => {
+router.post('/', authenticateToken, validateTransaction, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { amount, description, date, type, categoryId } = req.body;
 
@@ -107,13 +107,15 @@ router.post('/', authenticateToken, validateTransaction, async (req: Authenticat
     });
 
     if (!category) {
-      return res.status(404).json({ error: 'Category not found or does not belong to user' });
+      res.status(404).json({ error: 'Category not found or does not belong to user' });
+      return;
     }
 
     if (category.type !== type) {
-      return res.status(400).json({ 
+      res.status(400).json({ 
         error: `Category type (${category.type}) does not match transaction type (${type})` 
       });
+      return;
     }
 
     const transaction = await prisma.transaction.create({
@@ -146,7 +148,7 @@ router.post('/', authenticateToken, validateTransaction, async (req: Authenticat
 });
 
 // Update transaction
-router.put('/:id', authenticateToken, validateTransaction, async (req: AuthenticatedRequest, res) => {
+router.put('/:id', authenticateToken, validateTransaction, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const { amount, description, date, type, categoryId } = req.body;
@@ -160,7 +162,8 @@ router.put('/:id', authenticateToken, validateTransaction, async (req: Authentic
     });
 
     if (!existingTransaction) {
-      return res.status(404).json({ error: 'Transaction not found' });
+      res.status(404).json({ error: 'Transaction not found' });
+      return;
     }
 
     // Verify category belongs to user and type matches
@@ -172,13 +175,15 @@ router.put('/:id', authenticateToken, validateTransaction, async (req: Authentic
     });
 
     if (!category) {
-      return res.status(404).json({ error: 'Category not found or does not belong to user' });
+      res.status(404).json({ error: 'Category not found or does not belong to user' });
+      return;
     }
 
     if (category.type !== type) {
-      return res.status(400).json({ 
+      res.status(400).json({ 
         error: `Category type (${category.type}) does not match transaction type (${type})` 
       });
+      return;
     }
 
     const transaction = await prisma.transaction.update({
@@ -211,7 +216,7 @@ router.put('/:id', authenticateToken, validateTransaction, async (req: Authentic
 });
 
 // Delete transaction
-router.delete('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => {
+router.delete('/:id', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
 
@@ -224,7 +229,8 @@ router.delete('/:id', authenticateToken, async (req: AuthenticatedRequest, res) 
     });
 
     if (!transaction) {
-      return res.status(404).json({ error: 'Transaction not found' });
+      res.status(404).json({ error: 'Transaction not found' });
+      return;
     }
 
     await prisma.transaction.delete({
@@ -239,7 +245,7 @@ router.delete('/:id', authenticateToken, async (req: AuthenticatedRequest, res) 
 });
 
 // Get single transaction
-router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => {
+router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
 
@@ -262,7 +268,8 @@ router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => 
     });
 
     if (!transaction) {
-      return res.status(404).json({ error: 'Transaction not found' });
+      res.status(404).json({ error: 'Transaction not found' });
+      return;
     }
 
     res.json(transaction);
