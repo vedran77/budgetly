@@ -256,4 +256,105 @@ router.get('/trends', authenticateToken, async (req: AuthenticatedRequest, res: 
   }
 });
 
-module.exports = router;
+// Get budget overview for current month
+router.get('/budget-overview', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user!.userId;
+    const currentDate = new Date();
+    const currentMonth = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+    
+    // Get current month's budget
+    const budget = await prisma.budget.findUnique({
+      where: {
+        userId_month: { userId, month: currentMonth }
+      },
+      include: {
+        categoryBudgets: {
+          include: {
+            category: true
+          }
+        }
+      }
+    });
+
+    if (!budget) {
+      res.json({ 
+        hasBudget: false,
+        message: 'No budget set for current month'
+      });
+      return;
+    }
+
+    // Get spending for current month
+    const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+
+    const transactions = await prisma.transaction.findMany({
+      where: {
+        userId,
+        type: 'expense',
+        date: {
+          gte: monthStart,
+          lte: monthEnd
+        }
+      },
+      include: {
+        category: true
+      }
+    });
+
+    // Calculate spending by category
+    const categorySpending = transactions.reduce((acc, transaction) => {
+      if (!acc[transaction.categoryId]) {
+        acc[transaction.categoryId] = 0;
+      }
+      acc[transaction.categoryId] += transaction.amount;
+      return acc;
+    }, {} as Record<number, number>);
+
+    // Calculate total spending
+    const totalSpent = transactions.reduce((sum, t) => sum + t.amount, 0);
+    const remainingBudget = budget.totalBudget - totalSpent;
+    const budgetUsedPercentage = (totalSpent / budget.totalBudget) * 100;
+
+    // Calculate category budget status
+    const categoryBudgetStatus = budget.categoryBudgets.map(cb => {
+      const spent = categorySpending[cb.categoryId] || 0;
+      const remaining = cb.budgetAmount - spent;
+      const percentage = cb.budgetAmount > 0 ? (spent / cb.budgetAmount) * 100 : 0;
+      
+      let status = 'good';
+      if (percentage >= 100) status = 'over';
+      else if (percentage >= 80) status = 'warning';
+
+      return {
+        categoryId: cb.categoryId,
+        categoryName: cb.category.name,
+        categoryColor: cb.category.color,
+        categoryIcon: cb.category.icon,
+        budgetAmount: cb.budgetAmount,
+        spent,
+        remaining,
+        percentage: Math.round(percentage),
+        status
+      };
+    });
+
+    res.json({
+      hasBudget: true,
+      month: currentMonth,
+      totalBudget: budget.totalBudget,
+      totalSpent,
+      remainingBudget,
+      budgetUsedPercentage: Math.round(budgetUsedPercentage),
+      status: budgetUsedPercentage >= 100 ? 'over' : budgetUsedPercentage >= 80 ? 'warning' : 'good',
+      categoryBudgets: categoryBudgetStatus,
+      transactionCount: transactions.length
+    });
+  } catch (error) {
+    console.error('Budget overview error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+export default router;

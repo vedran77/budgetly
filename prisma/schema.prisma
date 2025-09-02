@@ -16,18 +16,46 @@ model User {
   updatedAt    DateTime      @updatedAt
   categories   Category[]
   transactions Transaction[]
+  budgets      Budget[]
 }
 
 model Category {
-  id           Int           @id @default(autoincrement())
-  name         String
-  type         String        // 'income' or 'expense'
-  color        String        // hex color code
-  icon         String        // icon name/code
-  userId       Int
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  transactions Transaction[]
-  createdAt    DateTime      @default(now())
+  id              Int              @id @default(autoincrement())
+  name            String
+  type            String           // 'income' or 'expense'
+  color           String           // hex color code
+  icon            String           // icon name/code
+  userId          Int
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions    Transaction[]
+  categoryBudgets CategoryBudget[]
+  createdAt       DateTime         @default(now())
+}
+
+model Budget {
+  id             Int                   @id @default(autoincrement())
+  month          String                // Format: 'YYYY-MM'
+  totalBudget    Float
+  userId         Int
+  user           User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryBudgets CategoryBudget[]
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  
+  @@unique([userId, month])
+}
+
+model CategoryBudget {
+  id           Int      @id @default(autoincrement())
+  budgetAmount Float
+  budgetId     Int
+  categoryId   Int
+  budget       Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  category     Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@unique([budgetId, categoryId])
 }
 
 model Transaction {

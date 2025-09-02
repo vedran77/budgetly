@@ -28,10 +28,17 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/categories', require('./routes/categories'));
-app.use('/api/transactions', require('./routes/transactions'));
-app.use('/api/dashboard', require('./routes/dashboard'));
+import authRoutes from './routes/auth';
+import categoryRoutes from './routes/categories';
+import transactionRoutes from './routes/transactions';
+import dashboardRoutes from './routes/dashboard';
+import budgetRoutes from './routes/budgets';
+
+app.use('/api/auth', authRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/transactions', transactionRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/budgets', budgetRoutes);
 
 app.use((_req, res) => {
   res.status(404).json({ error: 'Route not found' });
