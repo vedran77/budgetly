@@ -10,10 +10,11 @@ interface AuthState {
   isAuthenticated: boolean;
   
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, name: string, password: string) => Promise<void>;
+  register: (email: string, name: string, password: string, currency?: string) => Promise<void>;
   logout: () => void;
   clearError: () => void;
   initAuth: () => void;
+  setUser: (user: User) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -50,10 +51,10 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      register: async (email: string, name: string, password: string) => {
+      register: async (email: string, name: string, password: string, currency?: string) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await authApi.register({ email, name, password });
+          const response = await authApi.register({ email, name, password, currency });
           const { token, user } = response.data;
           
           localStorage.setItem('authToken', token);
@@ -86,6 +87,8 @@ export const useAuthStore = create<AuthState>()(
       },
 
       clearError: () => set({ error: null }),
+
+      setUser: (user: User) => set({ user }),
 
       initAuth: () => {
         const token = localStorage.getItem('authToken');

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export const api = axios.create({
   baseURL: `${API_BASE_URL}/api`,
@@ -54,6 +54,7 @@ export interface User {
   id: number;
   email: string;
   name: string;
+  currency: string;
 }
 
 export interface AuthResponse {
@@ -138,11 +139,20 @@ export interface BudgetOverview {
 
 // Auth API
 export const authApi = {
-  register: (data: { email: string; name: string; password: string }) =>
+  register: (data: { email: string; name: string; password: string; currency?: string }) =>
     api.post<AuthResponse>("/auth/register", data),
   login: (data: { email: string; password: string }) =>
     api.post<AuthResponse>("/auth/login", data),
   logout: () => api.post("/auth/logout"),
+};
+
+// Users API
+export const usersApi = {
+  getProfile: () => api.get<{ user: User }>("/users/profile"),
+  updateProfile: (data: { name?: string; currency?: string }) =>
+    api.put<{ message: string; user: User }>("/users/profile", data),
+  updateCurrency: (currency: string) =>
+    api.put<{ message: string; user: User }>("/users/currency", { currency }),
 };
 
 // Categories API

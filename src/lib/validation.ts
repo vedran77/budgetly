@@ -29,6 +29,12 @@ export const validateRegistration = [
   body('password')
     .isLength({ min: 6 })
     .withMessage('Password must be at least 6 characters long'),
+  body('currency')
+    .optional()
+    .isLength({ min: 3, max: 3 })
+    .isAlpha()
+    .toUpperCase()
+    .withMessage('Currency must be a 3-letter currency code'),
   handleValidationErrors
 ];
 

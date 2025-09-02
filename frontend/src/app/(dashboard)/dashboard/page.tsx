@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { dashboardApi, BudgetOverview } from '@/lib/api';
+import { formatCurrency } from '@/lib/currency';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
@@ -43,12 +44,8 @@ export default function DashboardPage() {
     fetchBudgetOverview();
   }, [isAuthenticated, router]);
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('bs-BA', {
-      style: 'currency',
-      currency: 'BAM',
-      minimumFractionDigits: 2,
-    }).format(amount);
+  const formatAmount = (amount: number) => {
+    return formatCurrency(amount, user?.currency || 'USD');
   };
 
   const getStatusColor = (status: 'good' | 'warning' | 'over') => {
@@ -116,7 +113,7 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {formatCurrency(budgetOverview.totalBudget || 0)}
+                  {formatAmount(budgetOverview.totalBudget || 0)}
                 </div>
               </CardContent>
             </Card>
@@ -128,7 +125,7 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {formatCurrency(budgetOverview.totalSpent || 0)}
+                  {formatAmount(budgetOverview.totalSpent || 0)}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {budgetOverview.budgetUsedPercentage}% of budget used
@@ -143,7 +140,7 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {formatCurrency(budgetOverview.remainingBudget || 0)}
+                  {formatAmount(budgetOverview.remainingBudget || 0)}
                 </div>
               </CardContent>
             </Card>
@@ -201,10 +198,10 @@ export default function DashboardPage() {
                       </div>
                       <div className="text-right">
                         <div className="text-sm">
-                          {formatCurrency(category.spent)} / {formatCurrency(category.budgetAmount)}
+                          {formatAmount(category.spent)} / {formatAmount(category.budgetAmount)}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {formatCurrency(category.remaining)} remaining
+                          {formatAmount(category.remaining)} remaining
                         </div>
                       </div>
                     </div>

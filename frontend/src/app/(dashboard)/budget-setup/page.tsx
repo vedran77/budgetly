@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { categoriesApi, budgetsApi, Category } from '@/lib/api';
+import { formatCurrency, getCurrencyByCode } from '@/lib/currency';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,7 +26,7 @@ interface CategoryBudget {
 }
 
 export default function BudgetSetupPage() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
   const [totalBudget, setTotalBudget] = useState<number>(0);
@@ -132,12 +133,13 @@ export default function BudgetSetupPage() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('bs-BA', {
-      style: 'currency',
-      currency: 'BAM',
-      minimumFractionDigits: 2,
-    }).format(amount);
+  const formatAmount = (amount: number) => {
+    return formatCurrency(amount, user?.currency || 'USD');
+  };
+
+  const getCurrencySymbol = () => {
+    const currency = getCurrencyByCode(user?.currency || 'USD');
+    return currency?.symbol || user?.currency || 'USD';
   };
 
   if (!isAuthenticated) {
@@ -169,7 +171,7 @@ export default function BudgetSetupPage() {
         <CardContent>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="totalBudget">Total Monthly Budget (KM)</Label>
+              <Label htmlFor="totalBudget">Total Monthly Budget ({getCurrencySymbol()})</Label>
               <Input
                 id="totalBudget"
                 type="number"
@@ -186,19 +188,19 @@ export default function BudgetSetupPage() {
               <div className="text-center">
                 <div className="text-sm text-gray-600">Total Budget</div>
                 <div className="text-lg font-bold text-blue-600">
-                  {formatCurrency(totalBudget)}
+                  {formatAmount(totalBudget)}
                 </div>
               </div>
               <div className="text-center">
                 <div className="text-sm text-gray-600">Allocated</div>
                 <div className="text-lg font-bold text-green-600">
-                  {formatCurrency(totalAllocated)}
+                  {formatAmount(totalAllocated)}
                 </div>
               </div>
               <div className="text-center">
                 <div className="text-sm text-gray-600">Remaining</div>
                 <div className={`text-lg font-bold ${remaining >= 0 ? 'text-gray-800' : 'text-red-600'}`}>
-                  {formatCurrency(remaining)}
+                  {formatAmount(remaining)}
                 </div>
               </div>
             </div>
@@ -257,7 +259,7 @@ export default function BudgetSetupPage() {
                       placeholder="0.00"
                       className="w-32"
                     />
-                    <span className="text-gray-500 text-sm">KM</span>
+                    <span className="text-gray-500 text-sm">{getCurrencySymbol()}</span>
                   </div>
                 </div>
               ))

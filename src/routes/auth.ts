@@ -9,7 +9,7 @@ const router = Router();
 // Register new user
 router.post('/register', validateRegistration, async (req: Request, res: Response): Promise<void> => {
   try {
-    const { email, name, password } = req.body;
+    const { email, name, password, currency } = req.body;
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -29,7 +29,8 @@ router.post('/register', validateRegistration, async (req: Request, res: Respons
       data: {
         email,
         name,
-        password: hashedPassword
+        password: hashedPassword,
+        currency: currency || 'USD'
       }
     });
 
@@ -61,7 +62,8 @@ router.post('/register', validateRegistration, async (req: Request, res: Respons
       user: {
         id: user.id,
         email: user.email,
-        name: user.name
+        name: user.name,
+        currency: user.currency
       }
     });
   } catch (error) {
@@ -77,7 +79,14 @@ router.post('/login', validateLogin, async (req: Request, res: Response): Promis
 
     // Find user
     const user = await prisma.user.findUnique({
-      where: { email }
+      where: { email },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        password: true,
+        currency: true
+      }
     });
 
     console.log(user);
@@ -104,7 +113,8 @@ router.post('/login', validateLogin, async (req: Request, res: Response): Promis
       user: {
         id: user.id,
         email: user.email,
-        name: user.name
+        name: user.name,
+        currency: user.currency
       }
     });
   } catch (error) {

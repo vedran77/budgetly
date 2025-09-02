@@ -10,7 +10,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuthStore } from '@/stores/auth';
+import { CURRENCIES } from '@/lib/currency';
 import { toast } from 'sonner';
 
 const registerSchema = z.object({
@@ -18,6 +20,7 @@ const registerSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   confirmPassword: z.string(),
+  currency: z.string().min(3, 'Please select a currency'),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -33,9 +36,14 @@ export default function RegisterPage() {
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
+    defaultValues: {
+      currency: 'USD'
+    }
   });
 
   const onSubmit = async (data: RegisterForm) => {
@@ -43,7 +51,7 @@ export default function RegisterPage() {
     clearError();
     
     try {
-      await registerUser(data.email, data.name, data.password);
+      await registerUser(data.email, data.name, data.password, data.currency);
       toast.success('Account created successfully!');
       router.push('/dashboard');
     } catch {
@@ -116,6 +124,34 @@ export default function RegisterPage() {
             />
             {errors.confirmPassword && (
               <p className="text-sm text-red-500">{errors.confirmPassword.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="currency">Currency</Label>
+            <Select
+              value={watch('currency')}
+              onValueChange={(value) => setValue('currency', value)}
+              disabled={isLoading}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select your currency" />
+              </SelectTrigger>
+              <SelectContent>
+                {CURRENCIES.map((currency) => (
+                  <SelectItem key={currency.code} value={currency.code}>
+                    <div className="flex items-center gap-2">
+                      <span>{currency.flag}</span>
+                      <span>{currency.symbol}</span>
+                      <span>{currency.name}</span>
+                      <span className="text-muted-foreground">({currency.code})</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.currency && (
+              <p className="text-sm text-red-500">{errors.currency.message}</p>
             )}
           </div>
 

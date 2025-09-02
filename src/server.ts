@@ -33,12 +33,14 @@ import categoryRoutes from './routes/categories';
 import transactionRoutes from './routes/transactions';
 import dashboardRoutes from './routes/dashboard';
 import budgetRoutes from './routes/budgets';
+import userRoutes from './routes/users';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/budgets', budgetRoutes);
+app.use('/api/users', userRoutes);
 
 app.use((_req, res) => {
   res.status(404).json({ error: 'Route not found' });

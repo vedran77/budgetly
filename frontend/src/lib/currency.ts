@@ -1,0 +1,118 @@
+export interface Currency {
+  code: string;
+  name: string;
+  symbol: string;
+  flag: string;
+}
+
+export const CURRENCIES: Currency[] = [
+  { code: 'USD', name: 'US Dollar', symbol: '$', flag: '🇺🇸' },
+  { code: 'EUR', name: 'Euro', symbol: '€', flag: '🇪🇺' },
+  { code: 'GBP', name: 'British Pound', symbol: '£', flag: '🇬🇧' },
+  { code: 'JPY', name: 'Japanese Yen', symbol: '¥', flag: '🇯🇵' },
+  { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$', flag: '🇨🇦' },
+  { code: 'AUD', name: 'Australian Dollar', symbol: 'A$', flag: '🇦🇺' },
+  { code: 'CHF', name: 'Swiss Franc', symbol: 'CHF', flag: '🇨🇭' },
+  { code: 'CNY', name: 'Chinese Yuan', symbol: '¥', flag: '🇨🇳' },
+  { code: 'BAM', name: 'Bosnian Mark', symbol: 'BAM', flag: '🇧🇦' },
+  { code: 'RSD', name: 'Serbian Dinar', symbol: 'RSD', flag: '🇷🇸' },
+  { code: 'HRK', name: 'Croatian Kuna', symbol: 'kn', flag: '🇭🇷' },
+  { code: 'PLN', name: 'Polish Złoty', symbol: 'zł', flag: '🇵🇱' },
+  { code: 'CZK', name: 'Czech Koruna', symbol: 'Kč', flag: '🇨🇿' },
+  { code: 'HUF', name: 'Hungarian Forint', symbol: 'Ft', flag: '🇭🇺' },
+  { code: 'RON', name: 'Romanian Leu', symbol: 'lei', flag: '🇷🇴' },
+  { code: 'BGN', name: 'Bulgarian Lev', symbol: 'лв', flag: '🇧🇬' },
+  { code: 'INR', name: 'Indian Rupee', symbol: '₹', flag: '🇮🇳' },
+  { code: 'BRL', name: 'Brazilian Real', symbol: 'R$', flag: '🇧🇷' },
+  { code: 'MXN', name: 'Mexican Peso', symbol: '$', flag: '🇲🇽' },
+  { code: 'ZAR', name: 'South African Rand', symbol: 'R', flag: '🇿🇦' },
+];
+
+// Country to currency mapping
+const COUNTRY_CURRENCY_MAP: Record<string, string> = {
+  'US': 'USD',
+  'CA': 'CAD',
+  'GB': 'GBP',
+  'AU': 'AUD',
+  'JP': 'JPY',
+  'CH': 'CHF',
+  'CN': 'CNY',
+  'BA': 'KM',
+  'RS': 'RSD',
+  'PL': 'PLN',
+  'CZ': 'CZK',
+  'HU': 'HUF',
+  'RO': 'RON',
+  'BG': 'BGN',
+  'IN': 'INR',
+  'BR': 'BRL',
+  'MX': 'MXN',
+  'ZA': 'ZAR',
+  // EU countries default to EUR
+  'DE': 'EUR', 'FR': 'EUR', 'IT': 'EUR', 'ES': 'EUR', 'NL': 'EUR',
+  'BE': 'EUR', 'AT': 'EUR', 'PT': 'EUR', 'IE': 'EUR', 'FI': 'EUR',
+  'LU': 'EUR', 'SI': 'EUR', 'SK': 'EUR', 'EE': 'EUR', 'LV': 'EUR',
+  'LT': 'EUR', 'CY': 'EUR', 'MT': 'EUR', 'GR': 'EUR',
+};
+
+export function getCurrencyByCode(code: string): Currency | undefined {
+  return CURRENCIES.find(currency => currency.code === code);
+}
+
+export function formatCurrency(amount: number, currencyCode: string): string {
+  const currency = getCurrencyByCode(currencyCode);
+  if (!currency) return `${amount} ${currencyCode}`;
+  
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currencyCode,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
+export async function detectCurrencyFromLocation(): Promise<string> {
+  try {
+    // First try to get country from browser's geolocation
+    if (navigator.geolocation) {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          timeout: 5000,
+          enableHighAccuracy: false,
+        });
+      });
+
+      // Use a geolocation API to get country from coordinates
+      const response = await fetch(
+        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${position.coords.latitude}&longitude=${position.coords.longitude}&localityLanguage=en`
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        const countryCode = data.countryCode;
+        
+        if (countryCode && COUNTRY_CURRENCY_MAP[countryCode]) {
+          return COUNTRY_CURRENCY_MAP[countryCode];
+        }
+      }
+    }
+  } catch (error) {
+    console.log('Geolocation detection failed:', error);
+  }
+
+  // Fallback: try to detect from browser language/locale
+  try {
+    const locale = navigator.language || navigator.languages?.[0];
+    if (locale) {
+      const countryCode = locale.split('-')[1]?.toUpperCase();
+      if (countryCode && COUNTRY_CURRENCY_MAP[countryCode]) {
+        return COUNTRY_CURRENCY_MAP[countryCode];
+      }
+    }
+  } catch (error) {
+    console.log('Locale detection failed:', error);
+  }
+
+  // Final fallback
+  return 'USD';
+}
