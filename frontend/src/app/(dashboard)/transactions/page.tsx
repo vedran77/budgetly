@@ -14,13 +14,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Plus, Receipt, Calendar, DollarSign } from 'lucide-react';
+import { Plus, Receipt, Edit, Trash2 } from 'lucide-react';
 
 const transactionSchema = z.object({
   amount: z.string().min(1, 'Amount is required').refine((val) => !isNaN(Number(val)) && Number(val) > 0, 'Amount must be a positive number'),
   description: z.string().optional(),
   date: z.string().min(1, 'Date is required'),
-  type: z.enum(['income', 'expense'], { required_error: 'Please select a transaction type' }),
+  type: z.enum(['income', 'expense'], { message: 'Please select a transaction type' }),
   categoryId: z.string().min(1, 'Please select a category'),
 });
 
@@ -32,6 +32,7 @@ export default function TransactionsPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
   const {
     register,
@@ -96,16 +97,68 @@ export default function TransactionsPage() {
         categoryId: parseInt(data.categoryId),
       };
 
-      const response = await transactionsApi.create(transactionData);
-      setTransactions(prev => [response.data, ...prev]);
+      if (editingTransaction) {
+        const response = await transactionsApi.update(editingTransaction.id, transactionData);
+        setTransactions(prev => prev.map(t => 
+          t.id === editingTransaction.id ? response.data : t
+        ));
+        setEditingTransaction(null);
+        toast.success('Transaction updated successfully!');
+      } else {
+        const response = await transactionsApi.create(transactionData);
+        setTransactions(prev => [response.data, ...prev]);
+        toast.success('Transaction added successfully!');
+      }
       reset();
-      toast.success('Transaction added successfully!');
-    } catch (error) {
-      console.error('Error creating transaction:', error);
-      toast.error('Failed to create transaction');
+    } catch (error: unknown) {
+      console.error('Error saving transaction:', error);
+      const errorMessage = error instanceof Error && 'response' in error && 
+        typeof error.response === 'object' && error.response && 
+        'data' in error.response && 
+        typeof error.response.data === 'object' && error.response.data &&
+        'error' in error.response.data && 
+        typeof error.response.data.error === 'string' 
+        ? error.response.data.error 
+        : (editingTransaction ? 'Failed to update transaction' : 'Failed to create transaction');
+      toast.error(errorMessage);
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleEdit = (transaction: Transaction) => {
+    setEditingTransaction(transaction);
+    setValue('amount', transaction.amount.toString());
+    setValue('description', transaction.description || '');
+    setValue('date', transaction.date.split('T')[0]);
+    setValue('type', transaction.type);
+    setValue('categoryId', transaction.categoryId.toString());
+  };
+
+  const handleDelete = async (transactionId: number) => {
+    if (!confirm('Are you sure you want to delete this transaction?')) return;
+    
+    try {
+      await transactionsApi.delete(transactionId);
+      setTransactions(prev => prev.filter(t => t.id !== transactionId));
+      toast.success('Transaction deleted successfully!');
+    } catch (error: unknown) {
+      console.error('Error deleting transaction:', error);
+      const errorMessage = error instanceof Error && 'response' in error && 
+        typeof error.response === 'object' && error.response && 
+        'data' in error.response && 
+        typeof error.response.data === 'object' && error.response.data &&
+        'error' in error.response.data && 
+        typeof error.response.data.error === 'string' 
+        ? error.response.data.error 
+        : 'Failed to delete transaction';
+      toast.error(errorMessage);
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingTransaction(null);
+    reset();
   };
 
   const formatAmount = (amount: number) => {
@@ -134,10 +187,10 @@ export default function TransactionsPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Plus className="w-5 h-5" />
-                Add Transaction
+                {editingTransaction ? 'Edit Transaction' : 'Add Transaction'}
               </CardTitle>
               <CardDescription>
-                Record a new income or expense transaction
+                {editingTransaction ? 'Update transaction details' : 'Record a new income or expense transaction'}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -243,9 +296,16 @@ export default function TransactionsPage() {
                   />
                 </div>
 
-                <Button type="submit" className="w-full" disabled={submitting}>
-                  {submitting ? 'Adding...' : 'Add Transaction'}
-                </Button>
+                <div className="flex gap-2">
+                  <Button type="submit" disabled={submitting} className="flex-1">
+                    {submitting ? (editingTransaction ? 'Updating...' : 'Adding...') : (editingTransaction ? 'Update Transaction' : 'Add Transaction')}
+                  </Button>
+                  {editingTransaction && (
+                    <Button type="button" variant="outline" onClick={cancelEdit}>
+                      Cancel
+                    </Button>
+                  )}
+                </div>
               </form>
             </CardContent>
           </Card>
@@ -301,10 +361,28 @@ export default function TransactionsPage() {
                           </p>
                         </div>
                       </div>
-                      <div className={`font-semibold text-lg ${
-                        transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
-                      }`}>
-                        {transaction.type === 'income' ? '+' : '-'}{formatAmount(transaction.amount)}
+                      <div className="flex items-center gap-2">
+                        <div className={`font-semibold text-lg ${
+                          transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {transaction.type === 'income' ? '+' : '-'}{formatAmount(transaction.amount)}
+                        </div>
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleEdit(transaction)}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDelete(transaction.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))}
