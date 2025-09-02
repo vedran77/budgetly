@@ -89,8 +89,6 @@ router.post('/login', validateLogin, async (req: Request, res: Response): Promis
       }
     });
 
-    console.log(user);
-
     if (!user) {
       res.status(401).json({ error: 'Invalid email or password' });
       return;
