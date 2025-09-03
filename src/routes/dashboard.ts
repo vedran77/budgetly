@@ -357,4 +357,170 @@ router.get('/budget-overview', authenticateToken, async (req: AuthenticatedReque
   }
 });
 
+// Get daily budget tracking
+router.get('/daily-budget', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user!.userId;
+    const currentDate = new Date();
+    const currentMonth = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+    
+    // Get current month's budget
+    const budget = await prisma.budget.findUnique({
+      where: {
+        userId_month: { userId, month: currentMonth }
+      },
+      include: {
+        categoryBudgets: {
+          include: {
+            category: true
+          }
+        }
+      }
+    });
+
+    if (!budget) {
+      res.json({ 
+        hasBudget: false,
+        message: 'No budget set for current month'
+      });
+      return;
+    }
+
+    // Calculate days in current month
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const currentDay = currentDate.getDate();
+    const remainingDaysInMonth = daysInMonth - currentDay + 1;
+
+    // Get spending for current month
+    const monthStart = new Date(year, month, 1);
+    const monthEnd = new Date(year, month + 1, 0);
+    
+    // Get today's spending
+    const todayStart = new Date(year, month, currentDay);
+    const todayEnd = new Date(year, month, currentDay, 23, 59, 59);
+
+    const [monthlyTransactions, todayTransactions] = await Promise.all([
+      prisma.transaction.findMany({
+        where: {
+          userId,
+          type: 'expense',
+          date: {
+            gte: monthStart,
+            lte: monthEnd
+          }
+        },
+        include: {
+          category: true
+        }
+      }),
+      prisma.transaction.findMany({
+        where: {
+          userId,
+          type: 'expense',
+          date: {
+            gte: todayStart,
+            lte: todayEnd
+          }
+        },
+        include: {
+          category: true
+        }
+      })
+    ]);
+
+    // Calculate spending by category for the month
+    const categorySpending = monthlyTransactions.reduce((acc, transaction) => {
+      if (!acc[transaction.categoryId]) {
+        acc[transaction.categoryId] = 0;
+      }
+      acc[transaction.categoryId] += transaction.amount;
+      return acc;
+    }, {} as Record<number, number>);
+
+    // Calculate today's spending by category
+    const todaySpending = todayTransactions.reduce((acc, transaction) => {
+      if (!acc[transaction.categoryId]) {
+        acc[transaction.categoryId] = 0;
+      }
+      acc[transaction.categoryId] += transaction.amount;
+      return acc;
+    }, {} as Record<number, number>);
+
+    // Calculate total spending
+    const totalSpentThisMonth = monthlyTransactions.reduce((sum, t) => sum + t.amount, 0);
+    const totalSpentToday = todayTransactions.reduce((sum, t) => sum + t.amount, 0);
+    
+    // Calculate remaining budget
+    const remainingBudget = budget.totalBudget - totalSpentThisMonth;
+    
+    // Calculate daily budget limits
+    const dailyBudgetLimit = budget.totalBudget / daysInMonth;
+    const adjustedDailyLimit = remainingBudget / remainingDaysInMonth;
+
+    // Calculate category daily budgets
+    const categoryDailyBudgets = budget.categoryBudgets.map(cb => {
+      const monthlySpent = categorySpending[cb.categoryId] || 0;
+      const todaySpent = todaySpending[cb.categoryId] || 0;
+      const remainingCategoryBudget = cb.budgetAmount - monthlySpent;
+      
+      // Calculate daily limits
+      const originalDailyLimit = cb.budgetAmount / daysInMonth;
+      const adjustedDailyLimit = remainingCategoryBudget / remainingDaysInMonth;
+      
+      let status = 'good';
+      if (todaySpent > adjustedDailyLimit) {
+        status = 'over';
+      } else if (todaySpent > (adjustedDailyLimit * 0.8)) {
+        status = 'warning';
+      }
+
+      return {
+        categoryId: cb.categoryId,
+        categoryName: cb.category.name,
+        categoryColor: cb.category.color,
+        categoryIcon: cb.category.icon,
+        totalBudget: cb.budgetAmount,
+        monthlySpent,
+        remainingBudget: remainingCategoryBudget,
+        originalDailyLimit,
+        adjustedDailyLimit: Math.max(0, adjustedDailyLimit),
+        todaySpent,
+        todayRemaining: Math.max(0, adjustedDailyLimit - todaySpent),
+        status
+      };
+    });
+
+    // Calculate overall daily status
+    let overallStatus = 'good';
+    if (totalSpentToday > adjustedDailyLimit) {
+      overallStatus = 'over';
+    } else if (totalSpentToday > (adjustedDailyLimit * 0.8)) {
+      overallStatus = 'warning';
+    }
+
+    res.json({
+      hasBudget: true,
+      currentDate: currentDate.toISOString().split('T')[0],
+      currentDay,
+      daysInMonth,
+      remainingDaysInMonth,
+      totalBudget: budget.totalBudget,
+      totalSpentThisMonth,
+      remainingBudget,
+      originalDailyLimit: dailyBudgetLimit,
+      adjustedDailyLimit: Math.max(0, adjustedDailyLimit),
+      todaySpent: totalSpentToday,
+      todayRemaining: Math.max(0, adjustedDailyLimit - totalSpentToday),
+      overallStatus,
+      categoryDailyBudgets,
+      todayTransactionCount: todayTransactions.length
+    });
+  } catch (error) {
+    console.error('Daily budget error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 export default router;

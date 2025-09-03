@@ -137,6 +137,38 @@ export interface BudgetOverview {
   message?: string;
 }
 
+export interface DailyBudgetOverview {
+  hasBudget: boolean;
+  currentDate: string;
+  currentDay: number;
+  daysInMonth: number;
+  remainingDaysInMonth: number;
+  totalBudget: number;
+  totalSpentThisMonth: number;
+  remainingBudget: number;
+  originalDailyLimit: number;
+  adjustedDailyLimit: number;
+  todaySpent: number;
+  todayRemaining: number;
+  overallStatus: 'good' | 'warning' | 'over';
+  categoryDailyBudgets: Array<{
+    categoryId: number;
+    categoryName: string;
+    categoryColor: string;
+    categoryIcon: string;
+    totalBudget: number;
+    monthlySpent: number;
+    remainingBudget: number;
+    originalDailyLimit: number;
+    adjustedDailyLimit: number;
+    todaySpent: number;
+    todayRemaining: number;
+    status: 'good' | 'warning' | 'over';
+  }>;
+  todayTransactionCount: number;
+  message?: string;
+}
+
 // Auth API
 export const authApi = {
   register: (data: { email: string; name: string; password: string; currency?: string }) =>
@@ -243,6 +275,7 @@ export const dashboardApi = {
       recentTransactions: Transaction[];
     }>("/dashboard/summary"),
   getBudgetOverview: () => api.get<BudgetOverview>("/dashboard/budget-overview"),
+  getDailyBudget: () => api.get<DailyBudgetOverview>("/dashboard/daily-budget"),
   getMonthlyStats: (months?: number) =>
     api.get<
       Array<{

@@ -3,13 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Receipt, Tags, Settings } from "lucide-react";
+import { LayoutDashboard, Receipt, Tags, Settings, Calendar } from "lucide-react";
 
 const navigation = [
   {
     name: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
+  },
+  {
+    name: "Daily Budget",
+    href: "/daily-budget",
+    icon: Calendar,
   },
   {
     name: "Transactions",

@@ -3,7 +3,7 @@
 import { useAuthStore } from '@/stores/auth';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { dashboardApi, BudgetOverview } from '@/lib/api';
+import { dashboardApi, BudgetOverview, DailyBudgetOverview } from '@/lib/api';
 import { formatCurrency } from '@/lib/currency';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -15,13 +15,15 @@ import {
   AlertTriangle, 
   CheckCircle,
   Plus,
-  DollarSign
+  DollarSign,
+  Calendar
 } from 'lucide-react';
 
 export default function DashboardPage() {
   const { user, isAuthenticated } = useAuthStore();
   const router = useRouter();
   const [budgetOverview, setBudgetOverview] = useState<BudgetOverview | null>(null);
+  const [dailyBudget, setDailyBudget] = useState<DailyBudgetOverview | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,8 +34,17 @@ export default function DashboardPage() {
 
     const fetchBudgetOverview = async () => {
       try {
-        const response = await dashboardApi.getBudgetOverview();
-        setBudgetOverview(response.data);
+        const [budgetResponse, dailyResponse] = await Promise.all([
+          dashboardApi.getBudgetOverview(),
+          dashboardApi.getDailyBudget().catch(err => {
+            console.error('Error fetching daily budget:', err);
+            return null;
+          })
+        ]);
+        setBudgetOverview(budgetResponse.data);
+        if (dailyResponse) {
+          setDailyBudget(dailyResponse.data);
+        }
       } catch (error) {
         console.error('Error fetching budget overview:', error);
       } finally {
@@ -104,6 +115,61 @@ export default function DashboardPage() {
         </Card>
       ) : (
         <>
+          {/* Daily Budget Summary Card */}
+          {dailyBudget?.hasBudget && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-5 h-5" />
+                    Today's Budget
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => router.push('/daily-budget')}
+                  >
+                    View Details
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-sm text-gray-600">Daily Limit</div>
+                    <div className="text-lg font-bold text-blue-600">
+                      {formatAmount(dailyBudget.adjustedDailyLimit)}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-600">Spent Today</div>
+                    <div className="text-lg font-bold">
+                      {formatAmount(dailyBudget.todaySpent)}
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4 space-y-2">
+                  <div className="flex justify-between">
+                    <span>Today's Progress</span>
+                    <span className={`font-medium ${
+                      dailyBudget.overallStatus === 'good' ? 'text-green-600' :
+                      dailyBudget.overallStatus === 'warning' ? 'text-yellow-600' : 'text-red-600'
+                    }`}>
+                      {Math.round(dailyBudget.adjustedDailyLimit > 0 ? (dailyBudget.todaySpent / dailyBudget.adjustedDailyLimit) * 100 : 0)}%
+                    </span>
+                  </div>
+                  <Progress 
+                    value={dailyBudget.adjustedDailyLimit > 0 ? Math.min((dailyBudget.todaySpent / dailyBudget.adjustedDailyLimit) * 100, 100) : 0}
+                    className="w-full"
+                  />
+                  <div className="text-xs text-gray-500 text-center">
+                    {formatAmount(dailyBudget.todayRemaining)} remaining for today • Day {dailyBudget.currentDay} of {dailyBudget.daysInMonth}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Budget Overview Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
