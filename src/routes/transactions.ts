@@ -5,6 +5,12 @@ import { validateTransaction } from '../lib/validation';
 
 const router = Router();
 
+// Utility function to parse date as local date to avoid timezone issues
+const parseDateAsLocal = (dateString: string): Date => {
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day); // month is 0-based in JavaScript
+};
+
 // Get transactions with filtering and pagination
 router.get('/', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
@@ -45,10 +51,13 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res: Respon
     if (startDate || endDate) {
       whereClause.date = {};
       if (startDate) {
-        whereClause.date.gte = new Date(startDate as string);
+        whereClause.date.gte = parseDateAsLocal(startDate as string);
       }
       if (endDate) {
-        whereClause.date.lte = new Date(endDate as string);
+        // For end date, set to end of day
+        const endDateLocal = parseDateAsLocal(endDate as string);
+        endDateLocal.setHours(23, 59, 59, 999);
+        whereClause.date.lte = endDateLocal;
       }
     }
 
@@ -122,7 +131,7 @@ router.post('/', authenticateToken, validateTransaction, async (req: Authenticat
       data: {
         amount: parseFloat(amount),
         description: description?.trim() || null,
-        date: new Date(date),
+        date: parseDateAsLocal(date),
         type,
         categoryId,
         userId: req.user!.userId
@@ -191,7 +200,7 @@ router.put('/:id', authenticateToken, validateTransaction, async (req: Authentic
       data: {
         amount: parseFloat(amount),
         description: description?.trim() || null,
-        date: new Date(date),
+        date: parseDateAsLocal(date),
         type,
         categoryId
       },

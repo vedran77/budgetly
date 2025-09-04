@@ -124,13 +124,15 @@ export default function DashboardPage() {
                     <Calendar className="w-5 h-5" />
                     Today's Budget
                   </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => router.push('/daily-budget')}
-                  >
-                    View Details
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => router.push('/daily-budget')}
+                    >
+                      View Details
+                    </Button>
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>

@@ -523,4 +523,185 @@ router.get('/daily-budget', authenticateToken, async (req: AuthenticatedRequest,
   }
 });
 
+// Get daily budget history for a specific month
+router.get('/daily-budget-history', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user!.userId;
+    const { month } = req.query;
+    const currentDate = new Date();
+    
+    // Default to current month if no month specified
+    const targetMonth = month as string || `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+    
+    // Parse the month string (YYYY-MM)
+    const [yearStr, monthStr] = targetMonth.split('-');
+    const year = parseInt(yearStr);
+    const monthNum = parseInt(monthStr) - 1; // JavaScript months are 0-based
+    
+    // Get budget for the specified month
+    const budget = await prisma.budget.findUnique({
+      where: {
+        userId_month: { userId, month: targetMonth }
+      },
+      include: {
+        categoryBudgets: {
+          include: {
+            category: true
+          }
+        }
+      }
+    });
+
+    if (!budget) {
+      res.json({ 
+        error: 'No budget found for the specified month',
+        month: targetMonth,
+        year,
+        totalBudget: 0,
+        totalSpent: 0,
+        averageDailySpent: 0,
+        originalDailyLimit: 0,
+        dailyData: []
+      });
+      return;
+    }
+
+    // Calculate days in the specified month
+    const daysInMonth = new Date(year, monthNum + 1, 0).getDate();
+    const monthStart = new Date(year, monthNum, 1);
+    const monthEnd = new Date(year, monthNum + 1, 0);
+    
+    // Get all transactions for the month
+    const monthlyTransactions = await prisma.transaction.findMany({
+      where: {
+        userId,
+        type: 'expense',
+        date: {
+          gte: monthStart,
+          lte: monthEnd
+        }
+      },
+      include: {
+        category: true
+      }
+    });
+
+    // Group transactions by day
+    const transactionsByDay = monthlyTransactions.reduce((acc, transaction) => {
+      const day = new Date(transaction.date).getDate();
+      if (!acc[day]) {
+        acc[day] = [];
+      }
+      acc[day].push(transaction);
+      return acc;
+    }, {} as Record<number, typeof monthlyTransactions>);
+
+    // Calculate spending by category for the entire month
+    const categorySpending = monthlyTransactions.reduce((acc, transaction) => {
+      if (!acc[transaction.categoryId]) {
+        acc[transaction.categoryId] = 0;
+      }
+      acc[transaction.categoryId] += transaction.amount;
+      return acc;
+    }, {} as Record<number, number>);
+
+    // Calculate totals
+    const totalSpent = monthlyTransactions.reduce((sum, t) => sum + t.amount, 0);
+    const originalDailyLimit = budget.totalBudget / daysInMonth;
+    
+    // Generate daily data
+    const dailyData = [];
+    const isCurrentMonth = year === currentDate.getFullYear() && monthNum === currentDate.getMonth();
+    const currentDay = isCurrentMonth ? currentDate.getDate() : daysInMonth;
+    
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dayTransactions = transactionsByDay[day] || [];
+      const actualSpent = dayTransactions.reduce((sum, t) => sum + t.amount, 0);
+      const isToday = isCurrentMonth && day === currentDate.getDate();
+      const isPastDay = day <= currentDay;
+      
+      // Calculate remaining budget up to this day for adjusted daily limit
+      const daysElapsed = day - 1;
+      const spentSoFar = monthlyTransactions
+        .filter(t => new Date(t.date).getDate() < day)
+        .reduce((sum, t) => sum + t.amount, 0);
+      const remainingBudget = budget.totalBudget - spentSoFar;
+      const remainingDays = daysInMonth - daysElapsed;
+      const adjustedDailyLimit = remainingDays > 0 ? remainingBudget / remainingDays : originalDailyLimit;
+      
+      // Calculate spending by category for this day
+      const daySpendingByCategory = dayTransactions.reduce((acc, transaction) => {
+        if (!acc[transaction.categoryId]) {
+          acc[transaction.categoryId] = 0;
+        }
+        acc[transaction.categoryId] += transaction.amount;
+        return acc;
+      }, {} as Record<number, number>);
+      
+      // Create category breakdown for this day
+      const categoryBreakdown = budget.categoryBudgets.map(cb => {
+        const categoryDailyLimit = cb.budgetAmount / daysInMonth;
+        const categorySpentToday = daySpendingByCategory[cb.categoryId] || 0;
+        const categoryRemaining = categoryDailyLimit - categorySpentToday;
+        
+        let categoryStatus = 'good';
+        if (categorySpentToday > categoryDailyLimit) {
+          categoryStatus = 'over';
+        } else if (categorySpentToday > (categoryDailyLimit * 0.8)) {
+          categoryStatus = 'warning';
+        }
+        
+        return {
+          categoryId: cb.categoryId,
+          categoryName: cb.category.name,
+          categoryColor: cb.category.color,
+          categoryIcon: cb.category.icon,
+          dailyLimit: categoryDailyLimit,
+          spent: categorySpentToday,
+          remaining: categoryRemaining,
+          status: categoryStatus as 'good' | 'warning' | 'over'
+        };
+      });
+      
+      // Calculate overall status for this day
+      let dayStatus = 'good';
+      if (actualSpent > adjustedDailyLimit) {
+        dayStatus = 'over';
+      } else if (actualSpent > (adjustedDailyLimit * 0.8)) {
+        dayStatus = 'warning';
+      }
+      
+      dailyData.push({
+        date: new Date(year, monthNum, day).toISOString().split('T')[0],
+        day,
+        isToday,
+        isPastDay,
+        dailyLimit: adjustedDailyLimit,
+        actualSpent,
+        remaining: adjustedDailyLimit - actualSpent,
+        status: dayStatus as 'good' | 'warning' | 'over',
+        transactionCount: dayTransactions.length,
+        categoryBreakdown: categoryBreakdown.filter(cb => cb.spent > 0 || cb.dailyLimit > 0)
+      });
+    }
+    
+    // Calculate average daily spending (only for past days)
+    const pastDays = dailyData.filter(d => d.isPastDay && !d.isToday).length + (dailyData.find(d => d.isToday) ? 1 : 0);
+    const averageDailySpent = pastDays > 0 ? totalSpent / pastDays : 0;
+
+    res.json({
+      month: targetMonth,
+      year,
+      totalBudget: budget.totalBudget,
+      totalSpent,
+      averageDailySpent,
+      originalDailyLimit,
+      dailyData
+    });
+  } catch (error) {
+    console.error('Daily budget history error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 export default router;

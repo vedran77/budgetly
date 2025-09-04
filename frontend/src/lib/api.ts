@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3005";
 
 export const api = axios.create({
   baseURL: `${API_BASE_URL}/api`,
@@ -169,6 +169,38 @@ export interface DailyBudgetOverview {
   message?: string;
 }
 
+export interface DailyBudgetHistory {
+  date: string;
+  day: number;
+  isToday: boolean;
+  isPastDay: boolean;
+  dailyLimit: number;
+  actualSpent: number;
+  remaining: number;
+  status: 'good' | 'warning' | 'over';
+  transactionCount: number;
+  categoryBreakdown: Array<{
+    categoryId: number;
+    categoryName: string;
+    categoryColor: string;
+    categoryIcon: string;
+    dailyLimit: number;
+    spent: number;
+    remaining: number;
+    status: 'good' | 'warning' | 'over';
+  }>;
+}
+
+export interface MonthlyDailyBudgetBreakdown {
+  month: string;
+  year: number;
+  totalBudget: number;
+  totalSpent: number;
+  averageDailySpent: number;
+  originalDailyLimit: number;
+  dailyData: DailyBudgetHistory[];
+}
+
 // Auth API
 export const authApi = {
   register: (data: { email: string; name: string; password: string; currency?: string }) =>
@@ -276,6 +308,8 @@ export const dashboardApi = {
     }>("/dashboard/summary"),
   getBudgetOverview: () => api.get<BudgetOverview>("/dashboard/budget-overview"),
   getDailyBudget: () => api.get<DailyBudgetOverview>("/dashboard/daily-budget"),
+  getDailyBudgetHistory: (month?: string) => 
+    api.get<MonthlyDailyBudgetBreakdown>("/dashboard/daily-budget-history", { params: { month } }),
   getMonthlyStats: (months?: number) =>
     api.get<
       Array<{
