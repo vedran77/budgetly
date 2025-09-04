@@ -170,17 +170,17 @@ export default function TransactionsPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 md:space-y-6 p-4 md:p-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Transactions</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl md:text-3xl font-bold">Transactions</h1>
+          <p className="text-muted-foreground text-sm md:text-base">
             Manage your income and expense transactions
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
         {/* Add Transaction Form */}
         <div className="lg:col-span-1">
           <Card>
@@ -328,22 +328,22 @@ export default function TransactionsPage() {
                   <p className="text-sm text-gray-400">Add your first transaction using the form</p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3 md:space-y-4">
                   {transactions.map((transaction) => (
                     <div
                       key={transaction.id}
-                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+                      className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 md:p-4 border rounded-lg hover:bg-gray-50 gap-3 sm:gap-0"
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
                         <div 
-                          className="w-3 h-3 rounded-full"
+                          className="w-3 h-3 rounded-full flex-shrink-0"
                           style={{ backgroundColor: transaction.category.color }}
                         />
-                        <div>
-                          <div className="flex items-center gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span>{transaction.category.icon}</span>
-                            <span className="font-medium">{transaction.category.name}</span>
-                            <span className={`text-xs px-2 py-1 rounded-full ${
+                            <span className="font-medium text-sm md:text-base">{transaction.category.name}</span>
+                            <span className={`text-xs px-2 py-1 rounded-full flex-shrink-0 ${
                               transaction.type === 'income' 
                                 ? 'bg-green-100 text-green-700' 
                                 : 'bg-red-100 text-red-700'
@@ -352,7 +352,7 @@ export default function TransactionsPage() {
                             </span>
                           </div>
                           {transaction.description && (
-                            <p className="text-sm text-gray-600 mt-1">
+                            <p className="text-xs md:text-sm text-gray-600 mt-1 truncate">
                               {transaction.description}
                             </p>
                           )}
@@ -361,8 +361,8 @@ export default function TransactionsPage() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className={`font-semibold text-lg ${
+                      <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
+                        <div className={`font-semibold text-base md:text-lg ${
                           transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
                         }`}>
                           {transaction.type === 'income' ? '+' : '-'}{formatAmount(transaction.amount)}
@@ -372,6 +372,7 @@ export default function TransactionsPage() {
                             size="sm"
                             variant="ghost"
                             onClick={() => handleEdit(transaction)}
+                            className="h-8 w-8 p-0"
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
@@ -379,6 +380,7 @@ export default function TransactionsPage() {
                             size="sm"
                             variant="ghost"
                             onClick={() => handleDelete(transaction.id)}
+                            className="h-8 w-8 p-0"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>

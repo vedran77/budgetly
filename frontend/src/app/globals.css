@@ -120,3 +120,34 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  /* Mobile scroll improvements */
+  .scroll-smooth {
+    scroll-behavior: smooth;
+  }
+  
+  /* Mobile safe area utilities */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  /* Better mobile touch targets */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Mobile-first responsive text */
+  .text-responsive {
+    font-size: clamp(0.875rem, 2.5vw, 1rem);
+  }
+  
+  .heading-responsive {
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+  }
+}

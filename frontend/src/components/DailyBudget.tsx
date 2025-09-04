@@ -138,13 +138,13 @@ export default function DailyBudget({ onAddTransaction }: DailyBudgetProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <DollarSign className="w-4 h-4 text-blue-600" />
                 <span className="text-sm font-medium">Today's Limit</span>
               </div>
-              <div className="text-2xl font-bold text-blue-600">
+              <div className="text-xl md:text-2xl font-bold text-blue-600">
                 {formatAmount(dailyBudget.adjustedDailyLimit)}
               </div>
               <div className="text-xs text-gray-500">
@@ -157,7 +157,7 @@ export default function DailyBudget({ onAddTransaction }: DailyBudgetProps) {
                 <TrendingDown className="w-4 h-4 text-red-600" />
                 <span className="text-sm font-medium">Spent Today</span>
               </div>
-              <div className="text-2xl font-bold">
+              <div className="text-xl md:text-2xl font-bold">
                 {formatAmount(dailyBudget.todaySpent)}
               </div>
               <div className="text-xs text-gray-500">
@@ -170,7 +170,7 @@ export default function DailyBudget({ onAddTransaction }: DailyBudgetProps) {
                 <CheckCircle className="w-4 h-4 text-green-600" />
                 <span className="text-sm font-medium">Remaining Today</span>
               </div>
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-xl md:text-2xl font-bold text-green-600">
                 {formatAmount(dailyBudget.todayRemaining)}
               </div>
               <div className="text-xs text-gray-500">
@@ -183,7 +183,7 @@ export default function DailyBudget({ onAddTransaction }: DailyBudgetProps) {
                 <Clock className="w-4 h-4 text-gray-600" />
                 <span className="text-sm font-medium">Days Left</span>
               </div>
-              <div className="text-2xl font-bold">
+              <div className="text-xl md:text-2xl font-bold">
                 {dailyBudget.remainingDaysInMonth}
               </div>
               <div className="text-xs text-gray-500">

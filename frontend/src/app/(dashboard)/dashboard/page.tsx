@@ -86,13 +86,13 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 md:space-y-6 p-4 md:p-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-gray-600">Welcome back, {user?.name}!</p>
+          <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
+          <p className="text-gray-600 text-sm md:text-base">Welcome back, {user?.name}!</p>
         </div>
-        <Button onClick={() => router.push('/budget-setup')}>
+        <Button onClick={() => router.push('/budget-setup')} className="sm:w-auto w-full">
           <Plus className="w-4 h-4 mr-2" />
           Setup Budget
         </Button>
@@ -134,16 +134,16 @@ export default function DashboardPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <div className="text-sm text-gray-600">Daily Limit</div>
-                    <div className="text-lg font-bold text-blue-600">
+                    <div className="text-base md:text-lg font-bold text-blue-600">
                       {formatAmount(dailyBudget.adjustedDailyLimit)}
                     </div>
                   </div>
                   <div>
                     <div className="text-sm text-gray-600">Spent Today</div>
-                    <div className="text-lg font-bold">
+                    <div className="text-base md:text-lg font-bold">
                       {formatAmount(dailyBudget.todaySpent)}
                     </div>
                   </div>
@@ -171,14 +171,14 @@ export default function DashboardPage() {
           )}
 
           {/* Budget Overview Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Budget</CardTitle>
                 <Wallet className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="text-xl md:text-2xl font-bold">
                   {formatAmount(budgetOverview.totalBudget || 0)}
                 </div>
               </CardContent>
@@ -190,7 +190,7 @@ export default function DashboardPage() {
                 <TrendingDown className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="text-xl md:text-2xl font-bold">
                   {formatAmount(budgetOverview.totalSpent || 0)}
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -205,7 +205,7 @@ export default function DashboardPage() {
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="text-xl md:text-2xl font-bold">
                   {formatAmount(budgetOverview.remainingBudget || 0)}
                 </div>
               </CardContent>
@@ -217,7 +217,7 @@ export default function DashboardPage() {
                 {getStatusIcon(budgetOverview.status || 'good')}
               </CardHeader>
               <CardContent>
-                <div className={`text-2xl font-bold ${getStatusColor(budgetOverview.status || 'good')}`}>
+                <div className={`text-lg md:text-2xl font-bold ${getStatusColor(budgetOverview.status || 'good')}`}>
                   {budgetOverview.status === 'good' ? 'On Track' : 
                    budgetOverview.status === 'warning' ? 'Warning' : 'Over Budget'}
                 </div>

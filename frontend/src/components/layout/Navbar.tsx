@@ -10,9 +10,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/stores/auth';
-import { LogOut, User, Settings } from 'lucide-react';
+import { LogOut, User, Settings, Menu } from 'lucide-react';
 
-export function Navbar() {
+interface NavbarProps {
+  onMobileMenuToggle?: () => void;
+}
+
+export function Navbar({ onMobileMenuToggle }: NavbarProps) {
   const { user, logout } = useAuthStore();
   const router = useRouter();
 
@@ -22,11 +26,19 @@ export function Navbar() {
   };
 
   return (
-    <nav className="border-b bg-white">
+    <nav className="border-b bg-white sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <h1 className="ml-24 text-xl font-bold text-gray-900">Budgetly</h1>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="md:hidden mr-2"
+              onClick={onMobileMenuToggle}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+            <h1 className="md:ml-24 text-xl font-bold text-gray-900">Budgetly</h1>
           </div>
 
           <div className="flex items-center space-x-4">
@@ -34,7 +46,7 @@ export function Navbar() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative">
                   <User className="h-5 w-5" />
-                  <span className="ml-2">{user?.name}</span>
+                  <span className="ml-2 hidden sm:inline">{user?.name}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>

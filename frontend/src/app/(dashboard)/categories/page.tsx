@@ -167,17 +167,17 @@ export default function CategoriesPage() {
   const expenseCategories = categories.filter(cat => cat.type === 'expense');
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 md:space-y-6 p-4 md:p-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Categories</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl md:text-3xl font-bold">Categories</h1>
+          <p className="text-muted-foreground text-sm md:text-base">
             Manage your income and expense categories
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
         {/* Add/Edit Category Form */}
         <div className="lg:col-span-1">
           <Card>
@@ -236,7 +236,7 @@ export default function CategoriesPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="color">Color</Label>
-                  <div className="grid grid-cols-6 gap-2 mb-2">
+                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mb-2">
                     {PRESET_COLORS.map((color) => (
                       <button
                         key={color}
@@ -264,7 +264,7 @@ export default function CategoriesPage() {
                 <div className="space-y-2">
                   <Label htmlFor="icon">Icon</Label>
                   <div className="max-h-32 overflow-y-auto border rounded-md p-2 mb-2">
-                    <div className="grid grid-cols-8 gap-1">
+                    <div className="grid grid-cols-6 sm:grid-cols-8 gap-1">
                       {PRESET_ICONS.map((icon) => (
                         <button
                           key={icon}
@@ -319,21 +319,41 @@ export default function CategoriesPage() {
               {incomeCategories.length === 0 ? (
                 <p className="text-center py-8 text-gray-500">No income categories yet</p>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-3 md:grid md:grid-cols-1 lg:grid-cols-2 md:gap-3 md:space-y-0">
                   {incomeCategories.map((category) => (
                     <div
                       key={category.id}
-                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
+                      className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-lg hover:bg-gray-50 gap-2 sm:gap-0"
                     >
-                      <div className="flex items-center gap-3">
-                        <div 
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: category.color }}
-                        />
-                        <span className="text-lg">{category.icon}</span>
-                        <span className="font-medium">{category.name}</span>
+                      <div className="flex items-center justify-between sm:justify-start gap-3">
+                        <div className="flex items-center gap-3">
+                          <div 
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: category.color }}
+                          />
+                          <span className="text-lg">{category.icon}</span>
+                          <span className="font-medium">{category.name}</span>
+                        </div>
+                        <div className="flex gap-1 sm:hidden">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleEdit(category)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDelete(category.id)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex gap-1">
+                      <div className="hidden sm:flex gap-1">
                         <Button
                           size="sm"
                           variant="ghost"
@@ -368,21 +388,41 @@ export default function CategoriesPage() {
               {expenseCategories.length === 0 ? (
                 <p className="text-center py-8 text-gray-500">No expense categories yet</p>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-3 md:grid md:grid-cols-1 lg:grid-cols-2 md:gap-3 md:space-y-0">
                   {expenseCategories.map((category) => (
                     <div
                       key={category.id}
-                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
+                      className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-lg hover:bg-gray-50 gap-2 sm:gap-0"
                     >
-                      <div className="flex items-center gap-3">
-                        <div 
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: category.color }}
-                        />
-                        <span className="text-lg">{category.icon}</span>
-                        <span className="font-medium">{category.name}</span>
+                      <div className="flex items-center justify-between sm:justify-start gap-3">
+                        <div className="flex items-center gap-3">
+                          <div 
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: category.color }}
+                          />
+                          <span className="text-lg">{category.icon}</span>
+                          <span className="font-medium">{category.name}</span>
+                        </div>
+                        <div className="flex gap-1 sm:hidden">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleEdit(category)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDelete(category.id)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex gap-1">
+                      <div className="hidden sm:flex gap-1">
                         <Button
                           size="sm"
                           variant="ghost"
