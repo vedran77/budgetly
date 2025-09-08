@@ -1,20 +1,19 @@
 'use client';
 
-import { useAuthStore } from '@/stores/auth';
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { categoriesApi, budgetsApi, Category } from '@/lib/api';
-import { formatCurrency, getCurrencyByCode } from '@/lib/currency';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { 
-  Save, 
-  Plus, 
-  Trash2,
-  ArrowLeft
+import { budgetsApi, categoriesApi } from '@/lib/api';
+import { formatCurrency, getCurrencyByCode } from '@/lib/currency';
+import { useAuthStore } from '@/stores/auth';
+import {
+  ArrowLeft,
+  Plus,
+  Save
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 interface CategoryBudget {
@@ -28,7 +27,6 @@ interface CategoryBudget {
 export default function BudgetSetupPage() {
   const { isAuthenticated, user } = useAuthStore();
   const router = useRouter();
-  const [categories, setCategories] = useState<Category[]>([]);
   const [totalBudget, setTotalBudget] = useState<number>(0);
   const [categoryBudgets, setCategoryBudgets] = useState<CategoryBudget[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,7 +45,6 @@ export default function BudgetSetupPage() {
         // Fetch categories
         const categoriesResponse = await categoriesApi.getAll();
         const expenseCategories = categoriesResponse.data.filter(cat => cat.type === 'expense');
-        setCategories(expenseCategories);
 
         // Initialize category budgets
         setCategoryBudgets(
@@ -73,7 +70,7 @@ export default function BudgetSetupPage() {
               return existingBudget ? { ...cb, budgetAmount: existingBudget.budgetAmount } : cb;
             })
           );
-        } catch (error) {
+        } catch {
           // No existing budget, that's fine
         }
       } catch (error) {
@@ -127,7 +124,7 @@ export default function BudgetSetupPage() {
       router.push('/dashboard');
     } catch (error: any) {
       console.error('Error saving budget:', error);
-      toast.error(error.response?.data?.error || 'Error saving budget');
+      toast.error(error?.response?.data?.error || 'Error saving budget');
     } finally {
       setSaving(false);
     }
@@ -208,7 +205,7 @@ export default function BudgetSetupPage() {
             {remaining < 0 && (
               <div className="p-3 bg-red-50 border border-red-200 rounded-md">
                 <p className="text-red-800 text-sm">
-                  ⚠️ You've allocated more than your total budget. Please adjust the amounts.
+                  ⚠️ You&apos;ve allocated more than your total budget. Please adjust the amounts.
                 </p>
               </div>
             )}

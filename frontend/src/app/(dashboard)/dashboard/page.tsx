@@ -1,23 +1,22 @@
 'use client';
 
-import { useAuthStore } from '@/stores/auth';
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { dashboardApi, BudgetOverview, DailyBudgetOverview } from '@/lib/api';
-import { formatCurrency } from '@/lib/currency';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Button } from '@/components/ui/button';
-import { 
-  Wallet, 
-  TrendingUp, 
-  TrendingDown, 
-  AlertTriangle, 
+import { BudgetOverview, DailyBudgetOverview, dashboardApi } from '@/lib/api';
+import { formatCurrency } from '@/lib/currency';
+import { useAuthStore } from '@/stores/auth';
+import {
+  AlertTriangle,
+  Calendar,
   CheckCircle,
-  Plus,
   DollarSign,
-  Calendar
+  Plus,
+  TrendingDown,
+  Wallet
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export default function DashboardPage() {
   const { user, isAuthenticated } = useAuthStore();
@@ -105,7 +104,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <p className="text-gray-600 mb-4">
-              You haven't set up a budget for this month yet. Create one to start tracking your expenses.
+              You haven&apos;t set up a budget for this month yet. Create one to start tracking your expenses.
             </p>
             <Button onClick={() => router.push('/budget-setup')}>
               <Plus className="w-4 h-4 mr-2" />
@@ -122,7 +121,7 @@ export default function DashboardPage() {
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Calendar className="w-5 h-5" />
-                    Today's Budget
+                    Today&apos;s Budget
                   </div>
                   <div className="flex gap-2">
                     <Button 
@@ -152,7 +151,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="mt-4 space-y-2">
                   <div className="flex justify-between">
-                    <span>Today's Progress</span>
+                    <span>Today&apos;s Progress</span>
                     <span className={`font-medium ${
                       dailyBudget.overallStatus === 'good' ? 'text-green-600' :
                       dailyBudget.overallStatus === 'warning' ? 'text-yellow-600' : 'text-red-600'

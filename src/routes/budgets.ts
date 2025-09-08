@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
 // Get user's budgets (with optional month filter)
 router.get('/', authenticateToken, [
   query('month').optional().isString().matches(/^\d{4}-\d{2}$/).withMessage('Month must be in YYYY-MM format')
-], async (req, res) => {
+], async (req: any, res: any) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -46,7 +46,7 @@ router.get('/', authenticateToken, [
 // Get specific budget by month
 router.get('/:month', authenticateToken, [
   param('month').isString().matches(/^\d{4}-\d{2}$/).withMessage('Month must be in YYYY-MM format')
-], async (req, res) => {
+], async (req: any, res: any) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -127,7 +127,7 @@ router.post('/', authenticateToken, [
   body('categoryBudgets').isArray().withMessage('Category budgets must be an array'),
   body('categoryBudgets.*.categoryId').isInt({ min: 1 }).withMessage('Category ID must be a positive integer'),
   body('categoryBudgets.*.budgetAmount').isFloat({ min: 0 }).withMessage('Budget amount must be a positive number')
-], async (req, res) => {
+], async (req: any, res: any) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -202,7 +202,7 @@ router.put('/:month', authenticateToken, [
   body('categoryBudgets').optional().isArray().withMessage('Category budgets must be an array'),
   body('categoryBudgets.*.categoryId').optional().isInt({ min: 1 }).withMessage('Category ID must be a positive integer'),
   body('categoryBudgets.*.budgetAmount').optional().isFloat({ min: 0 }).withMessage('Budget amount must be a positive number')
-], async (req, res) => {
+], async (req: any, res: any) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -293,7 +293,7 @@ router.put('/:month', authenticateToken, [
 // Delete budget
 router.delete('/:month', authenticateToken, [
   param('month').isString().matches(/^\d{4}-\d{2}$/).withMessage('Month must be in YYYY-MM format')
-], async (req, res) => {
+], async (req: any, res: any) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {

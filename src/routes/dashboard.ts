@@ -596,15 +596,6 @@ router.get('/daily-budget-history', authenticateToken, async (req: Authenticated
       return acc;
     }, {} as Record<number, typeof monthlyTransactions>);
 
-    // Calculate spending by category for the entire month
-    const categorySpending = monthlyTransactions.reduce((acc, transaction) => {
-      if (!acc[transaction.categoryId]) {
-        acc[transaction.categoryId] = 0;
-      }
-      acc[transaction.categoryId] += transaction.amount;
-      return acc;
-    }, {} as Record<number, number>);
-
     // Calculate totals
     const totalSpent = monthlyTransactions.reduce((sum, t) => sum + t.amount, 0);
     const originalDailyLimit = budget.totalBudget / daysInMonth;

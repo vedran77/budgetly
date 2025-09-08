@@ -1,21 +1,21 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useAuthStore } from '@/stores/auth';
-import { dashboardApi, DailyBudgetOverview } from '@/lib/api';
-import { formatCurrency } from '@/lib/currency';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Button } from '@/components/ui/button';
-import { 
+import { DailyBudgetOverview, dashboardApi } from '@/lib/api';
+import { formatCurrency } from '@/lib/currency';
+import { useAuthStore } from '@/stores/auth';
+import {
+  AlertTriangle,
   Calendar,
-  TrendingDown, 
-  AlertTriangle, 
   CheckCircle,
-  Plus,
+  Clock,
   DollarSign,
-  Clock
+  Plus,
+  TrendingDown
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface DailyBudgetProps {
   onAddTransaction?: () => void;
@@ -126,7 +126,7 @@ export default function DailyBudget({ onAddTransaction }: DailyBudgetProps) {
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Calendar className="w-5 h-5" />
-              Today's Budget - Day {dailyBudget.currentDay} of {dailyBudget.daysInMonth}
+              Today&apos;s Budget - Day {dailyBudget.currentDay} of {dailyBudget.daysInMonth}
             </div>
             <div className="flex items-center gap-2">
               {getStatusIcon(dailyBudget.overallStatus)}
@@ -142,7 +142,7 @@ export default function DailyBudget({ onAddTransaction }: DailyBudgetProps) {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <DollarSign className="w-4 h-4 text-blue-600" />
-                <span className="text-sm font-medium">Today's Limit</span>
+                <span className="text-sm font-medium">Today&apos;s Limit</span>
               </div>
               <div className="text-xl md:text-2xl font-bold text-blue-600">
                 {formatAmount(dailyBudget.adjustedDailyLimit)}
@@ -195,7 +195,7 @@ export default function DailyBudget({ onAddTransaction }: DailyBudgetProps) {
           {/* Today's Progress Bar */}
           <div className="mt-6 space-y-2">
             <div className="flex justify-between items-center">
-              <span className="font-medium">Today's Budget Usage</span>
+              <span className="font-medium">Today&apos;s Budget Usage</span>
               <span className={`font-bold ${getStatusColor(dailyBudget.overallStatus)}`}>
                 {Math.round(todaySpentPercentage)}%
               </span>
@@ -273,7 +273,7 @@ export default function DailyBudget({ onAddTransaction }: DailyBudgetProps) {
                   </div>
                   
                   <div className="flex justify-between text-xs text-gray-500">
-                    <span>{Math.round(percentage)}% of today's limit used</span>
+                    <span>{Math.round(percentage)}% of today&apos;s limit used</span>
                     <span>Monthly: {formatAmount(category.monthlySpent)} / {formatAmount(category.totalBudget)}</span>
                   </div>
                 </div>
